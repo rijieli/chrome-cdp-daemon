@@ -4,6 +4,7 @@ cdp_processing/
 cdp_outbox/
 cdp_archive/
 cdp_state.json
+cdp_state.json.tmp-*
 cdp_daemon.log
 cdp_daemon.log.1
 cdp_daemon.stdout.log
