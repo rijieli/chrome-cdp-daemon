@@ -21,8 +21,8 @@ const SCAN_INTERVAL_MS = 250;
 const HEARTBEAT_INTERVAL_MS = 15000;
 const CONNECT_TIMEOUT_MS = 8000;
 const MAX_LOG_BYTES = 512 * 1024;
-const MAX_ARCHIVE_FILES = 300;
 const MAX_OUTBOX_FILES = 300;
+let atomicWriteSeq = 0;
 
 function nowIso() {
   return new Date().toISOString();
@@ -46,7 +46,8 @@ async function ensureDir(p) {
 }
 
 async function atomicWriteJson(filePath, data) {
-  const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  atomicWriteSeq += 1;
+  const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}-${atomicWriteSeq}`;
   await fsp.writeFile(tmpPath, JSON.stringify(data, null, 2));
   await fsp.rename(tmpPath, filePath);
 }
@@ -81,6 +82,7 @@ class Logger {
 class StateStore {
   constructor(filePath) {
     this.filePath = filePath;
+    this.writeChain = Promise.resolve();
     this.state = {
       pid: process.pid,
       startedAt: nowIso(),
@@ -100,8 +102,12 @@ class StateStore {
   }
 
   async update(patch = {}) {
-    this.state = { ...this.state, ...patch, updatedAt: nowIso() };
-    await atomicWriteJson(this.filePath, this.state);
+    const nextState = { ...this.state, ...patch, updatedAt: nowIso() };
+    this.state = nextState;
+    this.writeChain = this.writeChain
+      .catch(() => {})
+      .then(() => atomicWriteJson(this.filePath, nextState));
+    return this.writeChain;
   }
 }
 
