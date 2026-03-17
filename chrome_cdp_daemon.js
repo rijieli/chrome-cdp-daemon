@@ -14,7 +14,7 @@ const PATHS = {
   state: path.join(ROOT, 'cdp_state.json'),
   log: path.join(ROOT, 'cdp_daemon.log'),
   stdout: path.join(ROOT, 'cdp_daemon.stdout.log'),
-  devtools: path.join(os.homedir(), 'Library/Application Support/Google/Chrome/DevToolsActivePort'),
+  devtools: process.env.CHROME_DEVTOOLS_ACTIVE_PORT_PATH || path.join(os.homedir(), 'Library/Application Support/Google/Chrome/DevToolsActivePort'),
 };
 
 const SCAN_INTERVAL_MS = 250;
@@ -22,6 +22,7 @@ const HEARTBEAT_INTERVAL_MS = 15000;
 const CONNECT_TIMEOUT_MS = 8000;
 const MAX_LOG_BYTES = 512 * 1024;
 const MAX_OUTBOX_FILES = 300;
+const MAX_ARCHIVE_FILES = 300;
 let atomicWriteSeq = 0;
 
 function nowIso() {
